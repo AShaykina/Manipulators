@@ -13,9 +13,9 @@ import java.util.Random;
 import static java.lang.Math.*;
 
 public class Manipulators extends ApplicationAdapter {
-    int field = 750;
+    short field = 750;
     double error = 0.001;
-    int n = 150; // 12 - уже падает
+    short n = 120; // 12 - уже падает // 175 максимум
 
     SpriteBatch batch;
     //Параметры лавандового манипулятора
@@ -28,41 +28,25 @@ public class Manipulators extends ApplicationAdapter {
     double l2L = 0.372677996;
     double l3L = 0.372677996;
 
-    double fi1L = 1.1071487177941;
-    double fi2L = PI - fi1L + 0.2;
-    double fi3L = - fi2L + 1;
-
     //Параметры красного манипулятора
     Sprite link1R;
     Sprite link2R;
     Sprite link3R;
     Sprite goalR;
 
-
-    ArrayList<Sprite> grid;
-
     double l1R = 0.372677996;
     double l2R = 0.372677996;
     double l3R = 0.372677996;
 
-    double fi1R = 1.1071487177941;
-    double fi2R = PI - fi1R + 0.2;
-    double fi3R = - fi2R + 1;
-
     double f1;
     double f2;
     double f3;
-    double f4;
-    double f5;
-    double f6;
 
-    Manipulator maniLavender;
+    Manipulator maniLav;
     Manipulator maniRed;
-    ManipulatorPair maniPair;
     Random random;
-    ArrayList<Point> stepsL;
-    ArrayList<Point> stepsR;
-    ArrayList<Point> steps;
+    ArrayList<Point3> stepsL;
+    ArrayList<Point3> stepsR;
 
     Thread ml;
 
@@ -82,73 +66,71 @@ public class Manipulators extends ApplicationAdapter {
     boolean iteringR = false;
     boolean iterDoneR = false;
 
-    boolean goaling = false;
-    boolean goalDone = false;
-    boolean calcing = false;
-    boolean calcDone = false;
-    boolean itering = false;
-    boolean iterDone = false;
-
-    int r = 9;
-    int height = (int)round(373 * field / 1000.0);
+    short r = 9;
 
     double dt = 0;
 
-    long time = System.currentTimeMillis();
     int i = 0;
     int j = 0;
+
+    ArrayList<Sprite> grid;
+//    long time = System.currentTimeMillis();
 
     @Override
     public void create() {
 
+        int height = (int) round(373 * field / 1000.0);
+
+        double fi1L = 1.1071487177941;
+        double fi2L = PI - fi1L + 0.2;
+        double fi3L = -fi2L + 1;
+
+        double fi1R = 1.1071487177941;
+        double fi2R = PI - fi1R + 0.2;
+        double fi3R = -fi2R + 1;
+
         random = new Random();
 
-        maniLavender = new Manipulator(n, l1L, l2L, l3L, fi1L, fi2L, fi3L, 0.5, 0, 'L', grid);
-        maniRed = new Manipulator(n, l1R, l2R, l3R, fi1R, fi2R, fi3R, 0.5, 1, 'R', grid);
+        maniLav = new Manipulator(n, l1L, l2L, l3L, fi1L, fi2L, fi3L, 0.5, 0, error);//, grid);
+        maniRed = new Manipulator(n, l1R, l2R, l3R, fi1R, fi2R, fi3R, 0.5, 1, error);//, grid);
 
         batch = new SpriteBatch();
 
-        goalL = new Sprite(new Texture(Gdx.files.internal("core/assets/linkLavender.png")), 0, 373 - 2*r, 2*r, 2*r);
+        goalL = new Sprite(new Texture(Gdx.files.internal("core/assets/linkLavender.png")), 0, 373 - 2 * r, 2 * r, 2 * r);
         goalL.setOrigin(r, r);
 
-        goalR = new Sprite(new Texture(Gdx.files.internal("core/assets/linkRed.png")), 0, 373 - 2*r, 2*r, 2*r);
+        goalR = new Sprite(new Texture(Gdx.files.internal("core/assets/linkRed.png")), 0, 373 - 2 * r, 2 * r, 2 * r);
         goalR.setOrigin(r, r);
 
-
-        link1L = new Sprite(new Texture(Gdx.files.internal("core/assets/linkLavender.png")), 0, 373-height, 2*r, height);
+        link1L = new Sprite(new Texture(Gdx.files.internal("core/assets/linkLavender.png")), 0, 373 - height, 2 * r, height);
         link1L.setOrigin(r, r);  // Центр вращения.
         link1L.setPosition(field * (float) 0.5 - r, 0 - r);
         link1L.setRotation((float) (fi1L * 180 / PI - 90));
 
-        link2L = new Sprite(new Texture(Gdx.files.internal("core/assets/linkLavender.png")), 0, 373-height, 2*r, height);
+        link2L = new Sprite(new Texture(Gdx.files.internal("core/assets/linkLavender.png")), 0, 373 - height, 2 * r, height);
         link2L.setOrigin(r, r);  // Центр вращения.
         link2L.setPosition(field * (float) (0.5 + l1L * cos(fi1L)) - r, field * (float) (l1L * sin(fi1L)) - r);
         link2L.setRotation((float) ((fi2L + fi1L) * 180 / PI - 90));
 
-        link3L = new Sprite(new Texture(Gdx.files.internal("core/assets/linkLavender.png")), 0, 373-height, 2*r, height);
+        link3L = new Sprite(new Texture(Gdx.files.internal("core/assets/linkLavender.png")), 0, 373 - height, 2 * r, height);
         link3L.setOrigin(r, r);  // Центр вращения.
         link3L.setPosition(field * (float) (0.5 + l1L * cos(fi1L) + l2L * cos(fi1L + fi2L)) - r, field * (float) (l1L * sin(fi1L) + l2L * sin(fi1L + fi2L)) - r);
         link3L.setRotation((float) ((fi3L + fi2L + fi1L) * 180 / PI - 90));
 
-        link1R = new Sprite(new Texture(Gdx.files.internal("core/assets/linkRed.png")), 0, 373-height, 2*r, height);
+        link1R = new Sprite(new Texture(Gdx.files.internal("core/assets/linkRed.png")), 0, 373 - height, 2 * r, height);
         link1R.setOrigin(r, r);  // Центр вращения.
         link1R.setPosition(field * (float) 0.5 - r, field - r);
         link1R.setRotation((float) (fi1R * 180 / PI + 90));
 
-        link2R = new Sprite(new Texture(Gdx.files.internal("core/assets/linkRed.png")), 0, 373-height, 2*r, height);
+        link2R = new Sprite(new Texture(Gdx.files.internal("core/assets/linkRed.png")), 0, 373 - height, 2 * r, height);
         link2R.setOrigin(r, r);  // Центр вращения.
-        link2R.setPosition(field * (float) (0.5 - l1R * cos(fi1R)) - r, field * (float) (1 -(l1R * sin(fi1R))) - r );
+        link2R.setPosition(field * (float) (0.5 - l1R * cos(fi1R)) - r, field * (float) (1 - (l1R * sin(fi1R))) - r);
         link2R.setRotation((float) ((fi2R + fi1R) * 180 / PI + 90));
 
-        link3R = new Sprite(new Texture(Gdx.files.internal("core/assets/linkRed.png")), 0, 373-height, 2*r, height);
+        link3R = new Sprite(new Texture(Gdx.files.internal("core/assets/linkRed.png")), 0, 373 - height, 2 * r, height);
         link3R.setOrigin(r, r);  // Центр вращения.
-        link3R.setPosition(field * (float) (0.5 - (l1R * cos(fi1R) + l2R * cos(fi1R + fi2R))) - r, field * (float) (1-(l1R * sin(fi1R) + l2R * sin(fi1R + fi2R))) - r);
+        link3R.setPosition(field * (float) (0.5 - (l1R * cos(fi1R) + l2R * cos(fi1R + fi2R))) - r, field * (float) (1 - (l1R * sin(fi1R) + l2R * sin(fi1R + fi2R))) - r);
         link3R.setRotation((float) ((fi3R + fi2R + fi1R) * 180 / PI + 90));
-
-        grid = new ArrayList<>();
-
-
-      //  maniPair = new ManipulatorPair(n, l1L, l2L, l3L, fi1L, fi2L, fi3L, l1R, l2R, l3R, fi1R, fi2R, fi3R, grid, error);
 
         setGoalR();
         goalDoneR = true;
@@ -158,43 +140,23 @@ public class Manipulators extends ApplicationAdapter {
 
     }
 
-    void runCalcL(final Manipulators ms) {
-        ml = new Thread(new Runnable() {
-            @Override
-            public void run() {
-                ms.calcL();
-            }
-        });
+    private void runCalcL(final Manipulators ms) {
+        ml = new Thread(ms::calcL);
         ml.start();
     }
 
-    void runGoalL(final Manipulators ms) {
-        ml = new Thread(new Runnable() {
-            @Override
-            public void run() {
-                ms.setGoalL();
-            }
-        });
+    private void runGoalL(final Manipulators ms) {
+        ml = new Thread(ms::setGoalL);
         ml.start();
     }
 
-    void runCalcR(final Manipulators ms) {
-        ml = new Thread(new Runnable() {
-            @Override
-            public void run() {
-                ms.calcR();
-            }
-        });
+    private void runCalcR(final Manipulators ms) {
+        ml = new Thread(ms::calcR);
         ml.start();
     }
 
-    void runGoalR(final Manipulators ms) {
-        ml = new Thread(new Runnable() {
-            @Override
-            public void run() {
-                ms.setGoalR();
-            }
-        });
+    private void runGoalR(final Manipulators ms) {
+        ml = new Thread(ms::setGoalR);
         ml.start();
     }
 
@@ -215,37 +177,11 @@ public class Manipulators extends ApplicationAdapter {
         link3R.draw(batch);
         goalR.draw(batch);
 
-    //    for(Sprite sp : grid) {
-    //        sp.draw(batch);
-    //    }
+        //    for(Sprite sp : grid) {
+        //        sp.draw(batch);
+        //    }
 
         batch.end();
-
-/*
-        if (!goalDone) {
-            if (!goaling) setGoal();
-        } else if (!calcDone) {
-            if (!calcing) calc();
-        } else if (!iterDone) {
-            if (!itering) {
-                if (dt > 15) {
-                    dt = 0;
-                    iter();
-                } else {
-                    dt++;
-                }
-            }
-        } else {
-            if (dt > 60) {
-                dt = 0;
-                goalDone = false;
-                calcDone = false;
-                iterDone = false;
-            } else {
-                dt++;
-            }
-        }
-        */
 
         if (goingRed) {
             if (!goalDoneL && !goalingL) runGoalL(this);
@@ -279,30 +215,30 @@ public class Manipulators extends ApplicationAdapter {
 
     //Генерирование цели и обозначение её в матрице
     public void setGoalL() {
-    //    long l = System.currentTimeMillis();
+        //    long l = System.currentTimeMillis();
         goalingL = true;
         float xL = 0;
         float yL = 0;
-        while(!goalDoneL) {
+        while (!goalDoneL) {
             xL = random.nextFloat();
             yL = random.nextFloat();
-        //    System.out.println("GoalL: " + xL + " " + yL);
-            goalDoneL = maniLavender.setArea(xL, yL);
+            System.out.println("GoalL: " + xL + " " + yL);
+            goalDoneL = maniLav.setGoal(xL, yL);
         }
         goalL.setPosition(field * xL - r, field * yL - r);
         goalingL = false;
-    //    System.out.println("Goal: " + (System.currentTimeMillis() - l));
+        //    System.out.println("Goal: " + (System.currentTimeMillis() - l));
     }
 
     public void setGoalR() {
         goalingR = true;
         float xR = 0;
         float yR = 0;
-        while(!goalDoneR) {
+        while (!goalDoneR) {
             xR = random.nextFloat();
             yR = random.nextFloat();
-        //    System.out.println("GoalR: " + xR + " " + yR);
-            goalDoneR = maniRed.setAreaR(xR, yR);
+            System.out.println("GoalR: " + xR + " " + yR);
+            goalDoneR = maniRed.setGoal(xR, yR);
         }
         goalR.setPosition(field * xR - r, field * yR - r);
         goalingR = false;
@@ -310,47 +246,69 @@ public class Manipulators extends ApplicationAdapter {
 
     public void calcL() {
         calcingL = true;
-        try {
         //    long l = System.currentTimeMillis();
-            stepsL = maniLavender.calculate();
+        stepsL = maniLav.calculate();
+        Point3 p = stepsL.get(stepsL.size() - 1);
+
+        double f1 = (p.getFi1() + 1) * PI / (n + 1);
+        double f2 = (p.getFi2() + 1) * 2 * PI / (2 * n + 3) - PI;
+        double f3 = (p.getFi3() + 1) * 2 * PI / (2 * n + 3) - PI;
+
+        double x1 = (float) (maniLav.x0 + maniLav.f * (maniLav.l1 * cos(f1)));
+        double y1 = (float) (maniLav.y0 + maniLav.f * (maniLav.l1 * sin(f1)));
+
+        double x2 = (float) (maniLav.x0 + maniLav.f * (maniLav.l1 * cos(f1) + maniLav.l2 * cos(f1 + f2)));
+        double y2 = (float) (maniLav.y0 + maniLav.f * (maniLav.l1 * sin(f1) + maniLav.l2 * sin(f1 + f2)));
+
+        double x3 = (float) (maniLav.x0 + maniLav.f * (maniLav.l1 * cos(f1) + maniLav.l2 * cos(f1 + f2) + maniLav.l3 * cos(f1 + f2 + f3)));
+        double y3 = (float) (maniLav.y0 + maniLav.f * (maniLav.l1 * sin(f1) + maniLav.l2 * sin(f1 + f2) + maniLav.l3 * sin(f1 + f2 + f3)));
+        maniRed.setCollision(maniLav.x0, maniLav.y0, x1, y1, x2, y2, x3, y3);
         //    System.out.println("Time: " + (System.currentTimeMillis() - l));
         //    System.out.println();
         //    System.out.println(stepsL);
-            calcDoneL = true;
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+        calcDoneL = true;
         calcingL = false;
     }
 
     public void calcR() {
         calcingR = true;
-        try {
         //    long l = System.currentTimeMillis();
-            stepsR = maniRed.calculate();
+        stepsR = maniRed.calculate();
+        Point3 p = stepsR.get(stepsR.size() - 1);
+
+        double f1 = (p.getFi1() + 1) * PI / (n + 1);
+        double f2 = (p.getFi2() + 1) * 2 * PI / (2 * n + 3) - PI;
+        double f3 = (p.getFi3() + 1) * 2 * PI / (2 * n + 3) - PI;
+
+        double x1 = (float) (maniRed.x0 + maniRed.f * (maniRed.l1 * cos(f1)));
+        double y1 = (float) (maniRed.y0 + maniRed.f * (maniRed.l1 * sin(f1)));
+
+        double x2 = (float) (maniRed.x0 + maniRed.f * (maniRed.l1 * cos(f1) + maniRed.l2 * cos(f1 + f2)));
+        double y2 = (float) (maniRed.y0 + maniRed.f * (maniRed.l1 * sin(f1) + maniRed.l2 * sin(f1 + f2)));
+
+        double x3 = (float) (maniRed.x0 + maniRed.f * (maniRed.l1 * cos(f1) + maniRed.l2 * cos(f1 + f2) + maniRed.l3 * cos(f1 + f2 + f3)));
+        double y3 = (float) (maniRed.y0 + maniRed.f * (maniRed.l1 * sin(f1) + maniRed.l2 * sin(f1 + f2) + maniRed.l3 * sin(f1 + f2 + f3)));
+        maniLav.setCollision(maniRed.x0, maniRed.y0, x1, y1, x2, y2, x3, y3);
         //    System.out.println("TimeR: " + (System.currentTimeMillis() - l));
         //    System.out.println();
         //    System.out.println(stepsR);
-            calcDoneR = true;
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+        calcDoneR = true;
         calcingR = false;
     }
 
     public void iterL() {
         iteringL = true;
 
-        Point point = stepsL.get(i);
+        Point3 point3 = stepsL.get(i);
 
-        f1 = (point.getFi1() + 1) * PI / (n + 1);
-        f2 = (point.getFi2() + 1) * 2 * PI / (2 * n + 3)- PI;
-        f3 = (point.getFi3() + 1) * 2 * PI / (2 * n + 3)- PI;
+        f1 = (point3.getFi1() + 1) * PI / (n + 1);
+        f2 = (point3.getFi2() + 1) * 2 * PI / (2 * n + 3) - PI;
+        f3 = (point3.getFi3() + 1) * 2 * PI / (2 * n + 3) - PI;
 
         link2L.setPosition(field * (float) (0.5 + l1L * cos(f1)) - r, field * (float) (l1L * sin(f1)) - r);
         link3L.setPosition(field * (float) (0.5 + l1L * cos(f1) + l2L * cos(f1 + f2)) - r, field * (float) (l1L * sin(f1) + l2L * sin(f1 + f2)) - r);
-        //System.out.println("Coordinates2 " + (field * (float) (0.5 + l1 * cos(point.getFi1()))) + " " + (field * (float) (l1 * sin(point.getFi1()))));
-        //System.out.println("Coordinates3 " + (field * (float) (0.5 + l1 * cos(point.getFi1()) + l2 * cos(point.getFi1() + point.getFi2()))) + " " + (field * (float) (l1 * sin(point.getFi1()) + l2 * sin(point.getFi1() + point.getFi2()))));
+        //System.out.println("Coordinates2 " + (field * (float) (0.5 + l1 * cos(point3.getFi1()))) + " " + (field * (float) (l1 * sin(point3.getFi1()))));
+        //System.out.println("Coordinates3 " + (field * (float) (0.5 + l1 * cos(point3.getFi1()) + l2 * cos(point3.getFi1() + point3.getFi2()))) + " " + (field * (float) (l1 * sin(point3.getFi1()) + l2 * sin(point3.getFi1() + point3.getFi2()))));
 
         link1L.setRotation((float) (f1 * 180 / PI - 90));
         link2L.setRotation((float) ((f1 + f2) * 180 / PI - 90));
@@ -358,8 +316,8 @@ public class Manipulators extends ApplicationAdapter {
 
         i++;
         if (i == stepsL.size()) {
-            System.out.println("Now: " + (float) (0.5 + l1L * cos(f1) + l2L * cos(f1 + f2) + l3L * cos(f1 + f2 + f3)) + " " + (float) (l1L * sin(f1) + l2L * sin(f1 + f2) + l3L * sin(f1 + f2 + f3)));
-            maniLavender.setPosition(point.getFi1(),point.getFi2(),point.getFi3());
+            System.out.println("NowL: " + (float) (0.5 + l1L * cos(f1) + l2L * cos(f1 + f2) + l3L * cos(f1 + f2 + f3)) + " " + (float) (l1L * sin(f1) + l2L * sin(f1 + f2) + l3L * sin(f1 + f2 + f3)));
+            maniLav.setPosition(point3.getFi1(), point3.getFi2(), point3.getFi3());
             iterDoneL = true;
             i = 0;
         }
@@ -369,16 +327,16 @@ public class Manipulators extends ApplicationAdapter {
     public void iterR() {
         iteringR = true;
 
-        Point point = stepsR.get(j);
+        Point3 point3 = stepsR.get(j);
 
-        f1 = (point.getFi1() + 1) * PI / (n + 1);
-        f2 = (point.getFi2() + 1) * 2 * PI / (2 * n + 3)- PI;
-        f3 = (point.getFi3() + 1) * 2 * PI / (2 * n + 3)- PI;
+        f1 = (point3.getFi1() + 1) * PI / (n + 1);
+        f2 = (point3.getFi2() + 1) * 2 * PI / (2 * n + 3) - PI;
+        f3 = (point3.getFi3() + 1) * 2 * PI / (2 * n + 3) - PI;
 
         link2R.setPosition(field * (float) (0.5 - l1R * cos(f1)) - r, field * (float) (1 - l1R * sin(f1)) - r);
         link3R.setPosition(field * (float) (0.5 - (l1R * cos(f1) + l2R * cos(f1 + f2))) - r, field * (float) (1 - (l1R * sin(f1) + l2R * sin(f1 + f2))) - r);
-        //System.out.println("Coordinates2 " + (field * (float) (0.5 + l1 * cos(point.getFi1()))) + " " + (field * (float) (l1 * sin(point.getFi1()))));
-        //System.out.println("Coordinates3 " + (field * (float) (0.5 + l1 * cos(point.getFi1()) + l2 * cos(point.getFi1() + point.getFi2()))) + " " + (field * (float) (l1 * sin(point.getFi1()) + l2 * sin(point.getFi1() + point.getFi2()))));
+        //System.out.println("Coordinates2 " + (field * (float) (0.5 + l1 * cos(point3.getFi1()))) + " " + (field * (float) (l1 * sin(point3.getFi1()))));
+        //System.out.println("Coordinates3 " + (field * (float) (0.5 + l1 * cos(point3.getFi1()) + l2 * cos(point3.getFi1() + point3.getFi2()))) + " " + (field * (float) (l1 * sin(point3.getFi1()) + l2 * sin(point3.getFi1() + point3.getFi2()))));
 
         link1R.setRotation((float) (f1 * 180 / PI + 90));
         link2R.setRotation((float) ((f1 + f2) * 180 / PI + 90));
@@ -387,84 +345,11 @@ public class Manipulators extends ApplicationAdapter {
         j++;
         if (j == stepsR.size()) {
             System.out.println("NowR: " + (float) (0.5 + l1R * cos(f1) + l2R * cos(f1 + f2) + l3R * cos(f1 + f2 + f3)) + " " + (float) (l1R * sin(f1) + l2R * sin(f1 + f2) + l3R * sin(f1 + f2 + f3)));
-            maniRed.setPosition(point.getFi1(),point.getFi2(),point.getFi3());
+            maniRed.setPosition(point3.getFi1(), point3.getFi2(), point3.getFi3());
             iterDoneR = true;
             j = 0;
         }
         iteringR = false;
-    }
-
-    public void setGoal() {
-        //    time = System.currentTimeMillis();
-        goaling = true;
-        float x1 = random.nextFloat();
-        float y1 = random.nextFloat();
-        goalL.setPosition(field * x1 - r, field * y1 - r);
-        float x2 = random.nextFloat();
-        float y2 = random.nextFloat();
-        goalR.setPosition(field * x2 - r, field * y2 - r);
-        goalDone = maniPair.setArea(x1, y1, x2, y2);
-        //    System.out.println("Goal " + (System.currentTimeMillis() - time));
-        goaling = false;
-    }
-
-    //Просчёт пути
-    public void calc() {
-        calcing = true;
-        try {
-            //    long l = System.currentTimeMillis();
-            steps = maniPair.calculate();
-            //    System.out.println("Time: " + (System.currentTimeMillis() - l));
-            //    System.out.println();
-            //    System.out.println(steps);
-            calcDone = true;
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        calcing = false;
-    }
-
-    //Одна итерация по массиву Steps
-    public void iter() {
-        itering = true;
-
-        Point point = steps.get(i);
-
-        f1 = (point.getFi1() + 1) * PI / (n + 1);
-        f2 = (point.getFi2() + 1) * 2 * PI / (2 * n + 3)- PI;
-        f3 = (point.getFi3() + 1) * 2 * PI / (2 * n + 3)- PI;
-        f4 = (point.getFi4() + 1) * PI / (n + 1);
-        f5 = (point.getFi5() + 1) * 2 * PI / (2 * n + 3)- PI;
-        f6 = (point.getFi6() + 1) * 2 * PI / (2 * n + 3)- PI;
-
-        link2L.setPosition(field * (float) (0.5 + l1L * cos(f1)) - r, field * (float) (l1L * sin(f1)) - r);
-        link3L.setPosition(field * (float) (0.5 + l1L * cos(f1) + l2L * cos(f1 + f2)) - r, field * (float) (l1L * sin(f1) + l2L * sin(f1 + f2)) - r);
-        //System.out.println("Coordinates2 " + (field * (float) (0.5 + l1 * cos(point.getFi1()))) + " " + (field * (float) (l1 * sin(point.getFi1()))));
-        //System.out.println("Coordinates3 " + (field * (float) (0.5 + l1 * cos(point.getFi1()) + l2 * cos(point.getFi1() + point.getFi2()))) + " " + (field * (float) (l1 * sin(point.getFi1()) + l2 * sin(point.getFi1() + point.getFi2()))));
-
-        link1L.setRotation((float) (f1 * 180 / PI - 90));
-        link2L.setRotation((float) ((f1 + f2) * 180 / PI - 90));
-        link3L.setRotation((float) ((f1 + f2 + f3) * 180 / PI - 90));
-
-        link2R.setPosition(field * (float) (0.5 - l1R * cos(f4)) - r, field * (float) (1 - l1R * sin(f4)) - r);
-        link3R.setPosition(field * (float) (0.5 - (l1R * cos(f4) + l2R * cos(f4 + f5))) - r, field * (float) (1 - (l1R * sin(f4) + l2R * sin(f4 + f5))) - r);
-        //System.out.println("Coordinates2 " + (field * (float) (0.5 + l1 * cos(point.getFi1()))) + " " + (field * (float) (l1 * sin(point.getFi1()))));
-        //System.out.println("Coordinates3 " + (field * (float) (0.5 + l1 * cos(point.getFi1()) + l2 * cos(point.getFi1() + point.getFi2()))) + " " + (field * (float) (l1 * sin(point.getFi1()) + l2 * sin(point.getFi1() + point.getFi2()))));
-
-        link1R.setRotation((float) (f4 * 180 / PI + 90));
-        link2R.setRotation((float) ((f4 + f5) * 180 / PI + 90));
-        link3R.setRotation((float) ((f4 + f5 + f6) * 180 / PI + 90));
-
-        i++;
-        if (i == steps.size()) {
-            //    System.out.println("Now: " + (float) (0.5 + l1L * cos(f1) + l2L * cos(f1 + f2) + l3L * cos(f1 + f2 + f3)) + " " + (float) (l1L * sin(f1) + l2L * sin(f1 + f2) + l3L * sin(f1 + f2 + f3)));
-            maniPair.setPosition(point.getFi1(),point.getFi2(),point.getFi3(),point.getFi4(),point.getFi5(),point.getFi6());
-            iterDone = true;
-            i = 0;
-        }
-
-        dt = 0;
-        itering = false;
     }
 
     @Override

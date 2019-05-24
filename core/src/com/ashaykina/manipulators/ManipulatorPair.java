@@ -14,7 +14,7 @@ public class ManipulatorPair {
     private byte[][][][][][] space;
     private int fi1, fi2, fi3, fi4, fi5, fi6;
     private double l1, l2, l3, l4, l5, l6;
-    private GraphPair graph;
+//    private GraphPair graph;
     private double error;
 
     ArrayList<Sprite> grid;
@@ -43,7 +43,7 @@ public class ManipulatorPair {
         System.out.println("Bounds " + (System.currentTimeMillis() - time));
         time = System.currentTimeMillis();
         //  setBoundsR();
-        graph = new GraphPair(space);
+    //    graph = new GraphPair(space);
         System.out.println("Graph " + (System.currentTimeMillis() - time));
         time = System.currentTimeMillis();
     }
@@ -231,10 +231,10 @@ public class ManipulatorPair {
             return false;
         }
     }
-
-    public ArrayList<Point> calculate() throws Exception {
+/*
+    public ArrayList<Point3> calculate() throws Exception {
         //    System.out.println("angles " + fi1 + " " + fi2 + " " + fi3);
         return graph.dijkstra(fi1, fi2, fi3, fi4, fi5, fi6);
     }
-
+*/
 }
