@@ -1,6 +1,6 @@
 package com.ashaykina.manipulators;
 
-public class Ark3 {
+class Ark3 {
     private Vertex3 from;
     private Vertex3 to;
 //    private int capacity;
@@ -11,11 +11,11 @@ public class Ark3 {
         //    this.capacity = capacity;
     }
 
-    public Vertex3 getFrom() {
+    Vertex3 getFrom() {
         return from;
     }
 
-    public Vertex3 getTo() {
+    Vertex3 getTo() {
         return to;
     }
 

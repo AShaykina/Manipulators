@@ -13,83 +13,66 @@ import java.util.Random;
 import static java.lang.Math.*;
 
 public class Manipulators extends ApplicationAdapter {
-    short field = 750;
-    double error = 0.001;
-    short n = 120; // 12 - уже падает // 175 максимум
+    private short field = 750;
+    private short n = 120; // 12 - уже падает // 175 максимум
 
-    SpriteBatch batch;
+    private SpriteBatch batch;
     //Параметры лавандового манипулятора
-    Sprite link1L;
-    Sprite link2L;
-    Sprite link3L;
-    Sprite goalL;
+    private Sprite link1L;
+    private Sprite link2L;
+    private Sprite link3L;
+    private Sprite goalL;
 
-    double l1L = 0.372677996;
-    double l2L = 0.372677996;
-    double l3L = 0.372677996;
 
     //Параметры красного манипулятора
-    Sprite link1R;
-    Sprite link2R;
-    Sprite link3R;
-    Sprite goalR;
+    private Sprite link1R;
+    private Sprite link2R;
+    private Sprite link3R;
+    private Sprite goalR;
 
-    double l1R = 0.372677996;
-    double l2R = 0.372677996;
-    double l3R = 0.372677996;
 
-    double f1;
-    double f2;
-    double f3;
+    private Manipulator maniLav;
+    private Manipulator maniRed;
+    private Random random;
 
-    Manipulator maniLav;
-    Manipulator maniRed;
-    Random random;
-    ArrayList<Point3> stepsL;
-    ArrayList<Point3> stepsR;
+    private Thread ml;
 
-    Thread ml;
+    private Boolean goingRed;
 
-    Boolean goingRed;
+    private short r = 9;
 
-    boolean goalingL = false;
-    boolean goalDoneL = false;
-    boolean calcingL = false;
-    boolean calcDoneL = false;
-    boolean iteringL = false;
-    boolean iterDoneL = false;
+    private double dt = 0;
 
-    boolean goalingR = false;
-    boolean goalDoneR = false;
-    boolean calcingR = false;
-    boolean calcDoneR = false;
-    boolean iteringR = false;
-    boolean iterDoneR = false;
+    private int i = 0;
 
-    short r = 9;
-
-    double dt = 0;
-
-    int i = 0;
-    int j = 0;
-
-    ArrayList<Sprite> grid;
-//    long time = System.currentTimeMillis();
+    //ArrayList<Sprite> grid;
 
     @Override
     public void create() {
 
         int height = (int) round(373 * field / 1000.0);
 
+        double error = 0.001;
+
+        double l1L = 0.372677996;
+        double l2L = 0.372677996;
+        double l3L = 0.372677996;
+
         double fi1L = 1.1071487177941;
         double fi2L = PI - fi1L + 0.2;
         double fi3L = -fi2L + 1;
+
+        double l1R = 0.372677996;
+        double l2R = 0.372677996;
+        double l3R = 0.372677996;
 
         double fi1R = 1.1071487177941;
         double fi2R = PI - fi1R + 0.2;
         double fi3R = -fi2R + 1;
 
         random = new Random();
+
+        //grid = new ArrayList<>();
 
         maniLav = new Manipulator(n, l1L, l2L, l3L, fi1L, fi2L, fi3L, 0.5, 0, error);//, grid);
         maniRed = new Manipulator(n, l1R, l2R, l3R, fi1R, fi2R, fi3R, 0.5, 1, error);//, grid);
@@ -132,31 +115,21 @@ public class Manipulators extends ApplicationAdapter {
         link3R.setPosition(field * (float) (0.5 - (l1R * cos(fi1R) + l2R * cos(fi1R + fi2R))) - r, field * (float) (1 - (l1R * sin(fi1R) + l2R * sin(fi1R + fi2R))) - r);
         link3R.setRotation((float) ((fi3R + fi2R + fi1R) * 180 / PI + 90));
 
-        setGoalR();
-        goalDoneR = true;
-        calcR();
-        calcDoneR = true;
+        setGoal(maniRed);
+        maniRed.goalDone = true;
+        calc(maniRed);
+        maniRed.calcDone = true;
         goingRed = true;
 
     }
 
-    private void runCalcL(final Manipulators ms) {
-        ml = new Thread(ms::calcL);
+    private void runCalc(final Manipulators ms, Manipulator mani) {
+        ml = new Thread(() -> ms.calc(mani));
         ml.start();
     }
 
-    private void runGoalL(final Manipulators ms) {
-        ml = new Thread(ms::setGoalL);
-        ml.start();
-    }
-
-    private void runCalcR(final Manipulators ms) {
-        ml = new Thread(ms::calcR);
-        ml.start();
-    }
-
-    private void runGoalR(final Manipulators ms) {
-        ml = new Thread(ms::setGoalR);
+    private void runGoal(final Manipulators ms, Manipulator mani) {
+        ml = new Thread(() -> ms.setGoal(mani));
         ml.start();
     }
 
@@ -184,29 +157,29 @@ public class Manipulators extends ApplicationAdapter {
         batch.end();
 
         if (goingRed) {
-            if (!goalDoneL && !goalingL) runGoalL(this);
-            else if (!calcDoneL && !calcingL) runCalcL(this);
-            if (!iterDoneR && !iteringR) {
+            if (!maniLav.goalDone && !maniLav.goaling) runGoal(this, maniLav);
+            else if (!maniLav.calcDone && !maniLav.calcing) runCalc(this, maniLav);
+            if (!maniRed.iterDone && !maniRed.itering) {
                 dt = 0;
-                iterR();
+                iter(maniRed);
             }
-            if (goalDoneL && calcDoneL && iterDoneR) {
-                goalDoneR = false;
-                calcDoneR = false;
-                iterDoneR = false;
+            if (maniLav.goalDone && maniLav.calcDone && maniRed.iterDone) {
+                maniRed.goalDone = false;
+                maniRed.calcDone = false;
+                maniRed.iterDone = false;
                 goingRed = false;
             }
         } else {
-            if (!goalDoneR && !goalingR) runGoalR(this);
-            else if (!calcDoneR && !calcingR) runCalcR(this);
-            if (!iterDoneL && !iteringL) {
+            if (!maniRed.goalDone && !maniRed.goaling) runGoal(this, maniRed);
+            else if (!maniRed.calcDone && !maniRed.calcing) runCalc(this, maniRed);
+            if (!maniLav.iterDone && !maniLav.itering) {
                 dt = 0;
-                iterL();
+                iter(maniLav);
             }
-            if (goalDoneR && calcDoneR && iterDoneL) {
-                goalDoneL = false;
-                calcDoneL = false;
-                iterDoneL = false;
+            if (maniRed.goalDone && maniRed.calcDone && maniLav.iterDone) {
+                maniLav.goalDone = false;
+                maniLav.calcDone = false;
+                maniLav.iterDone = false;
                 goingRed = true;
             }
         }
@@ -214,142 +187,83 @@ public class Manipulators extends ApplicationAdapter {
     }
 
     //Генерирование цели и обозначение её в матрице
-    public void setGoalL() {
+    private void setGoal(Manipulator mani) {
         //    long l = System.currentTimeMillis();
-        goalingL = true;
-        float xL = 0;
-        float yL = 0;
-        while (!goalDoneL) {
-            xL = random.nextFloat();
-            yL = random.nextFloat();
-            System.out.println("GoalL: " + xL + " " + yL);
-            goalDoneL = maniLav.setGoal(xL, yL);
+        mani.goaling = true;
+        float x = 0;
+        float y = 0;
+        while (!mani.goalDone) {
+            x = random.nextFloat();
+            y = random.nextFloat();
+            System.out.println("Goal: " + x + " " + y);
+            mani.goalDone = mani.setGoal(x, y);
         }
-        goalL.setPosition(field * xL - r, field * yL - r);
-        goalingL = false;
+        if (mani.y0 == 0) goalL.setPosition(field * x - r, field * y - r);
+        else goalR.setPosition(field * x - r, field * y - r);
+        mani.goaling = false;
         //    System.out.println("Goal: " + (System.currentTimeMillis() - l));
     }
 
-    public void setGoalR() {
-        goalingR = true;
-        float xR = 0;
-        float yR = 0;
-        while (!goalDoneR) {
-            xR = random.nextFloat();
-            yR = random.nextFloat();
-            System.out.println("GoalR: " + xR + " " + yR);
-            goalDoneR = maniRed.setGoal(xR, yR);
-        }
-        goalR.setPosition(field * xR - r, field * yR - r);
-        goalingR = false;
-    }
-
-    public void calcL() {
-        calcingL = true;
+    private void calc(Manipulator mani) {
+        mani.calcing = true;
         //    long l = System.currentTimeMillis();
-        stepsL = maniLav.calculate();
-        Point3 p = stepsL.get(stepsL.size() - 1);
+        mani.steps = mani.calculate();
+        Point3 p = mani.steps.get(mani.steps.size() - 1);
 
         double f1 = (p.getFi1() + 1) * PI / (n + 1);
         double f2 = (p.getFi2() + 1) * 2 * PI / (2 * n + 3) - PI;
         double f3 = (p.getFi3() + 1) * 2 * PI / (2 * n + 3) - PI;
 
-        double x1 = (float) (maniLav.x0 + maniLav.f * (maniLav.l1 * cos(f1)));
-        double y1 = (float) (maniLav.y0 + maniLav.f * (maniLav.l1 * sin(f1)));
+        double x1 = (float) (mani.x0 + mani.f * (mani.l1 * cos(f1)));
+        double y1 = (float) (mani.y0 + mani.f * (mani.l1 * sin(f1)));
 
-        double x2 = (float) (maniLav.x0 + maniLav.f * (maniLav.l1 * cos(f1) + maniLav.l2 * cos(f1 + f2)));
-        double y2 = (float) (maniLav.y0 + maniLav.f * (maniLav.l1 * sin(f1) + maniLav.l2 * sin(f1 + f2)));
+        double x2 = (float) (mani.x0 + mani.f * (mani.l1 * cos(f1) + mani.l2 * cos(f1 + f2)));
+        double y2 = (float) (mani.y0 + mani.f * (mani.l1 * sin(f1) + mani.l2 * sin(f1 + f2)));
 
-        double x3 = (float) (maniLav.x0 + maniLav.f * (maniLav.l1 * cos(f1) + maniLav.l2 * cos(f1 + f2) + maniLav.l3 * cos(f1 + f2 + f3)));
-        double y3 = (float) (maniLav.y0 + maniLav.f * (maniLav.l1 * sin(f1) + maniLav.l2 * sin(f1 + f2) + maniLav.l3 * sin(f1 + f2 + f3)));
-        maniRed.setCollision(maniLav.x0, maniLav.y0, x1, y1, x2, y2, x3, y3);
+        double x3 = (float) (mani.x0 + mani.f * (mani.l1 * cos(f1) + mani.l2 * cos(f1 + f2) + mani.l3 * cos(f1 + f2 + f3)));
+        double y3 = (float) (mani.y0 + mani.f * (mani.l1 * sin(f1) + mani.l2 * sin(f1 + f2) + mani.l3 * sin(f1 + f2 + f3)));
+        if (mani.y0 == 0) maniRed.setCollision(mani.x0, mani.y0, x1, y1, x2, y2, x3, y3);
+        else maniLav.setCollision(maniRed.x0, maniRed.y0, x1, y1, x2, y2, x3, y3);
         //    System.out.println("Time: " + (System.currentTimeMillis() - l));
         //    System.out.println();
         //    System.out.println(stepsL);
-        calcDoneL = true;
-        calcingL = false;
+        mani.calcDone = true;
+        mani.calcing = false;
     }
 
-    public void calcR() {
-        calcingR = true;
-        //    long l = System.currentTimeMillis();
-        stepsR = maniRed.calculate();
-        Point3 p = stepsR.get(stepsR.size() - 1);
+    private void iter(Manipulator mani) {
+        mani.itering = true;
 
-        double f1 = (p.getFi1() + 1) * PI / (n + 1);
-        double f2 = (p.getFi2() + 1) * 2 * PI / (2 * n + 3) - PI;
-        double f3 = (p.getFi3() + 1) * 2 * PI / (2 * n + 3) - PI;
+        Point3 point3 = mani.steps.get(i);
 
-        double x1 = (float) (maniRed.x0 + maniRed.f * (maniRed.l1 * cos(f1)));
-        double y1 = (float) (maniRed.y0 + maniRed.f * (maniRed.l1 * sin(f1)));
+        double f1 = (point3.getFi1() + 1) * PI / (n + 1);
+        double f2 = (point3.getFi2() + 1) * 2 * PI / (2 * n + 3) - PI;
+        double f3 = (point3.getFi3() + 1) * 2 * PI / (2 * n + 3) - PI;
 
-        double x2 = (float) (maniRed.x0 + maniRed.f * (maniRed.l1 * cos(f1) + maniRed.l2 * cos(f1 + f2)));
-        double y2 = (float) (maniRed.y0 + maniRed.f * (maniRed.l1 * sin(f1) + maniRed.l2 * sin(f1 + f2)));
+        if (mani.y0 == 0) {
+            link2L.setPosition(field * (float) (mani.x0 + mani.f * (mani.l1 * cos(f1))) - r, field * (float) (mani.y0 + mani.f * (mani.l1 * sin(f1))) - r);
+            link3L.setPosition(field * (float) (mani.x0 + mani.f * (mani.l1 * cos(f1) + mani.l2 * cos(f1 + f2))) - r, field * (float) (mani.y0 + mani.f * (mani.l1 * sin(f1) + mani.l2 * sin(f1 + f2))) - r);
 
-        double x3 = (float) (maniRed.x0 + maniRed.f * (maniRed.l1 * cos(f1) + maniRed.l2 * cos(f1 + f2) + maniRed.l3 * cos(f1 + f2 + f3)));
-        double y3 = (float) (maniRed.y0 + maniRed.f * (maniRed.l1 * sin(f1) + maniRed.l2 * sin(f1 + f2) + maniRed.l3 * sin(f1 + f2 + f3)));
-        maniLav.setCollision(maniRed.x0, maniRed.y0, x1, y1, x2, y2, x3, y3);
-        //    System.out.println("TimeR: " + (System.currentTimeMillis() - l));
-        //    System.out.println();
-        //    System.out.println(stepsR);
-        calcDoneR = true;
-        calcingR = false;
-    }
+            link1L.setRotation((float) (f1 * 180 / PI - 90));
+            link2L.setRotation((float) ((f1 + f2) * 180 / PI - 90));
+            link3L.setRotation((float) ((f1 + f2 + f3) * 180 / PI - 90));
+        } else {
+            link2R.setPosition(field * (float) (mani.x0 + mani.f * (mani.l1 * cos(f1))) - r, field * (float) (mani.y0 + mani.f * (mani.l1 * sin(f1))) - r);
+            link3R.setPosition(field * (float) (mani.x0 + mani.f * (mani.l1 * cos(f1) + mani.l2 * cos(f1 + f2))) - r, field * (float) (mani.y0 + mani.f * (mani.l1 * sin(f1) + mani.l2 * sin(f1 + f2))) - r);
 
-    public void iterL() {
-        iteringL = true;
-
-        Point3 point3 = stepsL.get(i);
-
-        f1 = (point3.getFi1() + 1) * PI / (n + 1);
-        f2 = (point3.getFi2() + 1) * 2 * PI / (2 * n + 3) - PI;
-        f3 = (point3.getFi3() + 1) * 2 * PI / (2 * n + 3) - PI;
-
-        link2L.setPosition(field * (float) (0.5 + l1L * cos(f1)) - r, field * (float) (l1L * sin(f1)) - r);
-        link3L.setPosition(field * (float) (0.5 + l1L * cos(f1) + l2L * cos(f1 + f2)) - r, field * (float) (l1L * sin(f1) + l2L * sin(f1 + f2)) - r);
-        //System.out.println("Coordinates2 " + (field * (float) (0.5 + l1 * cos(point3.getFi1()))) + " " + (field * (float) (l1 * sin(point3.getFi1()))));
-        //System.out.println("Coordinates3 " + (field * (float) (0.5 + l1 * cos(point3.getFi1()) + l2 * cos(point3.getFi1() + point3.getFi2()))) + " " + (field * (float) (l1 * sin(point3.getFi1()) + l2 * sin(point3.getFi1() + point3.getFi2()))));
-
-        link1L.setRotation((float) (f1 * 180 / PI - 90));
-        link2L.setRotation((float) ((f1 + f2) * 180 / PI - 90));
-        link3L.setRotation((float) ((f1 + f2 + f3) * 180 / PI - 90));
+            link1R.setRotation((float) (f1 * 180 / PI + 90));
+            link2R.setRotation((float) ((f1 + f2) * 180 / PI + 90));
+            link3R.setRotation((float) ((f1 + f2 + f3) * 180 / PI + 90));
+        }
 
         i++;
-        if (i == stepsL.size()) {
-            System.out.println("NowL: " + (float) (0.5 + l1L * cos(f1) + l2L * cos(f1 + f2) + l3L * cos(f1 + f2 + f3)) + " " + (float) (l1L * sin(f1) + l2L * sin(f1 + f2) + l3L * sin(f1 + f2 + f3)));
-            maniLav.setPosition(point3.getFi1(), point3.getFi2(), point3.getFi3());
-            iterDoneL = true;
+        if (i == mani.steps.size()) {
+            //    System.out.println("NowL: " + (float) (0.5 + l1L * cos(f1) + l2L * cos(f1 + f2) + l3L * cos(f1 + f2 + f3)) + " " + (float) (l1L * sin(f1) + l2L * sin(f1 + f2) + l3L * sin(f1 + f2 + f3)));
+            mani.setPosition(point3.getFi1(), point3.getFi2(), point3.getFi3());
+            mani.iterDone = true;
             i = 0;
         }
-        iteringL = false;
-    }
-
-    public void iterR() {
-        iteringR = true;
-
-        Point3 point3 = stepsR.get(j);
-
-        f1 = (point3.getFi1() + 1) * PI / (n + 1);
-        f2 = (point3.getFi2() + 1) * 2 * PI / (2 * n + 3) - PI;
-        f3 = (point3.getFi3() + 1) * 2 * PI / (2 * n + 3) - PI;
-
-        link2R.setPosition(field * (float) (0.5 - l1R * cos(f1)) - r, field * (float) (1 - l1R * sin(f1)) - r);
-        link3R.setPosition(field * (float) (0.5 - (l1R * cos(f1) + l2R * cos(f1 + f2))) - r, field * (float) (1 - (l1R * sin(f1) + l2R * sin(f1 + f2))) - r);
-        //System.out.println("Coordinates2 " + (field * (float) (0.5 + l1 * cos(point3.getFi1()))) + " " + (field * (float) (l1 * sin(point3.getFi1()))));
-        //System.out.println("Coordinates3 " + (field * (float) (0.5 + l1 * cos(point3.getFi1()) + l2 * cos(point3.getFi1() + point3.getFi2()))) + " " + (field * (float) (l1 * sin(point3.getFi1()) + l2 * sin(point3.getFi1() + point3.getFi2()))));
-
-        link1R.setRotation((float) (f1 * 180 / PI + 90));
-        link2R.setRotation((float) ((f1 + f2) * 180 / PI + 90));
-        link3R.setRotation((float) ((f1 + f2 + f3) * 180 / PI + 90));
-
-        j++;
-        if (j == stepsR.size()) {
-            System.out.println("NowR: " + (float) (0.5 + l1R * cos(f1) + l2R * cos(f1 + f2) + l3R * cos(f1 + f2 + f3)) + " " + (float) (l1R * sin(f1) + l2R * sin(f1 + f2) + l3R * sin(f1 + f2 + f3)));
-            maniRed.setPosition(point3.getFi1(), point3.getFi2(), point3.getFi3());
-            iterDoneR = true;
-            j = 0;
-        }
-        iteringR = false;
+        mani.itering = false;
     }
 
     @Override

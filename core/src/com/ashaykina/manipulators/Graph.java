@@ -4,14 +4,14 @@ import java.util.*;
 
 import static java.lang.Math.PI;
 
-public class Graph {
+class Graph {
 
     private ArrayList<Vertex3> graph;
     private int [][][] field;
     private byte [][][] space;
     private int n;
 
-    Graph(byte space[][][]) {
+    Graph(byte[][][] space) {
         this.space = space;
         this.graph = new ArrayList<>();
         this.field = new int[space.length][space[0].length][space[0][0].length];
@@ -65,7 +65,7 @@ public class Graph {
     }
 
     // Алгоритм Дейкстры поиска минимального расстояния
-    public ArrayList<Point3> dijkstra(short fi1, short fi2, short fi3) {
+    ArrayList<Point3> dijkstra(short fi1, short fi2, short fi3) {
         ArrayList<Point3> result = new ArrayList<>();
         //System.out.println(this.field.length + " " + this.field[0].length + " " + this.field[0][0].length + " " + fi1 + " " + fi2 + " " + fi3);
             int a = this.field[fi1][fi2][fi3];
@@ -75,7 +75,7 @@ public class Graph {
                 return null;
             } else {
 
-                PriorityQueue<Ark3> qu = new PriorityQueue((Comparator<Ark3>) (a1, a2) -> {
+                PriorityQueue<Ark3> qu = new PriorityQueue<>((a1, a2) -> {
                 //    double g = a1.getFrom().getDistance() + a1.getCapacity() - a2.getFrom().getDistance() - a2.getCapacity();
                     double g = a1.getFrom().getDistance() - a2.getFrom().getDistance();
                     if (g < 0) return -1;
