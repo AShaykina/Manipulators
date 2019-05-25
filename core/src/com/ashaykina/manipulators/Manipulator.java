@@ -10,15 +10,15 @@ import static java.lang.Math.*;
 
 class Manipulator {
 
-    private int n;
+    private Graph graph;
     private byte[][][] space;
+    private int n;
+    private double error;
     private short fi1, fi2, fi3;
     double l1, l2, l3;
-    private Graph graph;
     double x0;
     double y0;
     byte f;
-    private double error;
 
     boolean goaling = false;
     boolean goalDone = false;
@@ -28,17 +28,18 @@ class Manipulator {
     boolean iterDone = false;
 
     ArrayList<Point3> steps;
+    ArrayList<Point3> forces;
 
     //ArrayList<Sprite> grid;
 
     Manipulator(int n, double l1, double l2, double l3, double fi1, double fi2, double fi3, double x, double y, double error) {//, ArrayList<Sprite> grid) {
         //    this.grid = grid;
         this.n = n;
-        space = new byte[n][2 * n + 2][2 * n + 2];
+        space = new byte[n][2 * n + 1][2 * n + 1];
         this.l1 = l1;
         this.l2 = l2;
         this.l3 = l3;
-        setPosition((short) (fi1 * n / PI), (short) ((fi2 + PI) * (n + 1) / PI), (short) ((fi3 + PI) * (n + 1) / PI));
+        setPosition((short) (fi1 * (n + 1) / PI - 1), (short) ((fi2 + PI) * (n + 1) / PI - 1), (short) ((fi3 + PI) * (n + 1) / PI - 1));
         this.x0 = x;
         this.y0 = y;
         this.error = error;
@@ -67,12 +68,12 @@ class Manipulator {
         double b;
         double c;
         for (short i = 0; i < n; i++) {
-            for (short j = 0; j < 2 * n + 2; j++) {
-                for (short k = 0; k < 2 * n + 2; k++) {
+            for (short j = 0; j < 2 * n + 1; j++) {
+                for (short k = 0; k < 2 * n + 1; k++) {
                     if (space[i][j][k] != -1) {
                         a = (i + 1) * PI / (n + 1);
-                        b = (j + 1) * 2 * PI / (2 * n + 3) - PI;
-                        c = (k + 1) * 2 * PI / (2 * n + 3) - PI;
+                        b = (j + 1) * PI / (n + 1) - PI;
+                        c = (k + 1) * PI / (n + 1) - PI;
 
                         x1 = (float) (x0 + f * (l1 * cos(a)));
                         y1 = (float) (y0 + f * (l1 * sin(a)));
@@ -140,14 +141,14 @@ class Manipulator {
             double x3;
             double y3;
             for (short i = 0; i < n; i++) {
-                for (short j = 0; j < 2 * n + 2; j++) {
-                    for (short k = 0; k < 2 * n + 2; k++) {
+                for (short j = 0; j < 2 * n + 1; j++) {
+                    for (short k = 0; k < 2 * n + 1; k++) {
                         if (space[i][j][k] == -2)
                             space[i][j][k] = 0;  // Нивелирование влияния предыдущего запуска setArea.
                         if (space[i][j][k] != -1 && space[i][j][k] != -3) {
                             a = (i + 1) * PI / (n + 1);
-                            b = (j + 1) * 2 * PI / (2 * n + 3) - PI;
-                            c = (k + 1) * 2 * PI / (2 * n + 3) - PI;
+                            b = (j + 1) * PI / (n + 1) - PI;
+                            c = (k + 1) * PI / (n + 1) - PI;
 
                             x3 = (float) (x0 + f * (l1 * cos(a) + l2 * cos(a + b) + l3 * cos(a + b + c)));
                             y3 = (float) (y0 + f * (l1 * sin(a) + l2 * sin(a + b) + l3 * sin(a + b + c)));
@@ -155,12 +156,14 @@ class Manipulator {
                             if (abs(x - x3) < error && abs(y - y3) < error) {
                                 space[i][j][k] = -2;  // Задание целевой области в конфигурационном пространстве.
                                 p++;
-                                //    System.out.println(0.5 + x1 + " " + y1);
                             }
                         }
                     }
                 }
             }
+            System.out.println();
+            System.out.println("This is p " + p);
+            System.out.println();
             return p != 0;
         } else return false;
     }
@@ -178,13 +181,13 @@ class Manipulator {
         double c;
 
         for (short i = 0; i < n; i++) {
-            for (short j = 0; j < 2 * n + 2; j++) {
-                for (short k = 0; k < 2 * n + 2; k++) {
+            for (short j = 0; j < 2 * n + 1; j++) {
+                for (short k = 0; k < 2 * n + 1; k++) {
                     if (space[i][j][k] == -3) space[i][j][k] = 0;
                     if (space[i][j][k] != -1) {
                         a = (i + 1) * PI / (n + 1);
-                        b = (j + 1) * 2 * PI / (2 * n + 3) - PI;
-                        c = (k + 1) * 2 * PI / (2 * n + 3) - PI;
+                        b = (j + 1) * PI / (n + 1) - PI;
+                        c = (k + 1) * PI / (n + 1) - PI;
 
                         x1 = (float) (x0 + f * (l1 * cos(a)));
                         y1 = (float) (y0 + f * (l1 * sin(a)));
@@ -203,7 +206,6 @@ class Manipulator {
                                 intersect(x2, y2, x3, y3, x20, y20, x21, y21) ||
                                 intersect(x2, y2, x3, y3, x21, y21, x22, y22) ||
                                 intersect(x2, y2, x3, y3, x22, y22, x23, y23)) space[i][j][k] = -3;
-
                     }
                 }
             }
@@ -237,9 +239,43 @@ class Manipulator {
         return (x2 - x1) * (y3 - y1) - (y2 - y1) * (x3 - x1);
     }
 
-    ArrayList<Point3> calculate() {
+    boolean calculate() {
         //  System.out.println("angles " + fi1 + " " + fi2 + " " + fi3);
-        return graph.dijkstra(fi1, fi2, fi3);
+        steps = graph.dijkstra(fi1, fi2, fi3);
+        forces = forcing(steps, 0.1, 1 / 60f);
+        return !steps.isEmpty();
     }
 
+    ArrayList<Point3> forcing(ArrayList<Point3> lined, double fm, double dt) {
+        ArrayList<Point3> forces = new ArrayList<>();
+        double df1, df2, df3, df, fk;
+        int m;
+
+        for (int i = 0; i < lined.size() - 1; i++) {
+            df1 = lined.get(i + 1).fi1 - lined.get(i).fi1;
+            df2 = lined.get(i + 1).fi2 - lined.get(i).fi2;
+            df3 = lined.get(i + 1).fi3 - lined.get(i).fi3;
+            df = max(max(abs(df1), abs(df2)), abs(df3));
+
+            m = (int) (0.5 + sqrt(2 * df / (fm * dt * dt)));
+
+            for (int k = 0; k < m; k++) {
+                fk = (df - (m - k) * fm * dt * dt * (m + 1 + k)) / ((k + 1) * k * dt * dt);
+                if (abs(fk) < fm) {
+                    for (int j = 0; j < m - k; j++)
+                        forces.add(new Point3(signum(df1) * fm, signum(df2) * fm, signum(df3) * fm));
+                    for (int j = 0; j < k; j++)
+                        forces.add(new Point3(signum(df1) * signum(df1) * fk, signum(df2) * signum(df2) * fk, signum(df3) * signum(df3) * fk));
+                    forces.add(new Point3(0, 0, 0));
+                    for (int j = 0; j < k; j++)
+                        forces.add(new Point3((-1) * signum(df1) * signum(df1) * fk, (-1) * signum(df2) * signum(df2) * fk, (-1) * signum(df3) * signum(df3) * fk));
+                    for (int j = 0; j < m - k; j++)
+                        forces.add(new Point3((-1) * signum(df1) * fm, (-1) * signum(df2) * fm, (-1) * signum(df3) * fm));
+                    break;
+                }
+            }
+
+        }
+        return forces;
+    }
 }

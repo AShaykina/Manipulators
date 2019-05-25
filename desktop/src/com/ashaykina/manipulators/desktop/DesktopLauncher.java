@@ -10,6 +10,6 @@ public class DesktopLauncher {
 		config.width = 750;
 		config.height = 750;
 		config.vSyncEnabled = false;
-		new LwjglApplication(new Manipulators(), config);
+		new LwjglApplication(new Manipulators((short) 750), config);
 	}
 }
