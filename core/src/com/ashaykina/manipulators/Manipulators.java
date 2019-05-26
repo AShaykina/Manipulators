@@ -28,22 +28,20 @@ public class Manipulators extends ApplicationAdapter {
     private Sprite link3R;
     private Sprite goalR;
 
+    private byte r = 9;
 
     private Manipulator maniLav;
     private Manipulator maniRed;
-    private Random random;
 
+    private Random random;
     private Thread thread;
 
     private Boolean goingRed;
 
-    private short r = 9;
-
     private int i = 0;
+    private int k = 1;
 
     //ArrayList<Sprite> grid;
-
-
     public Manipulators(short field) {
         this.field = field;
     }
@@ -89,32 +87,25 @@ public class Manipulators extends ApplicationAdapter {
         link1L = new Sprite(new Texture(Gdx.files.internal("core/assets/linkLavender.png")), 0, 373 - height, 2 * r, height);
         link1L.setOrigin(r, r);  // Центр вращения.
         link1L.setPosition(field * (float) 0.5 - r, 0 - r);
-        link1L.setRotation((float) (fi1L * 180 / PI - 90));
 
         link2L = new Sprite(new Texture(Gdx.files.internal("core/assets/linkLavender.png")), 0, 373 - height, 2 * r, height);
         link2L.setOrigin(r, r);  // Центр вращения.
-        link2L.setPosition(field * (float) (0.5 + l1L * cos(fi1L)) - r, field * (float) (l1L * sin(fi1L)) - r);
-        link2L.setRotation((float) ((fi2L + fi1L) * 180 / PI - 90));
 
         link3L = new Sprite(new Texture(Gdx.files.internal("core/assets/linkLavender.png")), 0, 373 - height, 2 * r, height);
         link3L.setOrigin(r, r);  // Центр вращения.
-        link3L.setPosition(field * (float) (0.5 + l1L * cos(fi1L) + l2L * cos(fi1L + fi2L)) - r, field * (float) (l1L * sin(fi1L) + l2L * sin(fi1L + fi2L)) - r);
-        link3L.setRotation((float) ((fi3L + fi2L + fi1L) * 180 / PI - 90));
 
         link1R = new Sprite(new Texture(Gdx.files.internal("core/assets/linkRed.png")), 0, 373 - height, 2 * r, height);
         link1R.setOrigin(r, r);  // Центр вращения.
         link1R.setPosition(field * (float) 0.5 - r, field - r);
-        link1R.setRotation((float) (fi1R * 180 / PI + 90));
 
         link2R = new Sprite(new Texture(Gdx.files.internal("core/assets/linkRed.png")), 0, 373 - height, 2 * r, height);
         link2R.setOrigin(r, r);  // Центр вращения.
-        link2R.setPosition(field * (float) (0.5 - l1R * cos(fi1R)) - r, field * (float) (1 - (l1R * sin(fi1R))) - r);
-        link2R.setRotation((float) ((fi2R + fi1R) * 180 / PI + 90));
 
         link3R = new Sprite(new Texture(Gdx.files.internal("core/assets/linkRed.png")), 0, 373 - height, 2 * r, height);
         link3R.setOrigin(r, r);  // Центр вращения.
-        link3R.setPosition(field * (float) (0.5 - (l1R * cos(fi1R) + l2R * cos(fi1R + fi2R))) - r, field * (float) (1 - (l1R * sin(fi1R) + l2R * sin(fi1R + fi2R))) - r);
-        link3R.setRotation((float) ((fi3R + fi2R + fi1R) * 180 / PI + 90));
+
+        setSprites(maniRed, fi1R, fi2R, fi3R);
+        setSprites(maniLav, fi1L, fi2L, fi3L);
 
         goingRed = false;
 
@@ -127,18 +118,11 @@ public class Manipulators extends ApplicationAdapter {
         double x3 = (float) (maniLav.x0 + maniLav.f * (maniLav.l1 * cos(fi1L) + maniLav.l2 * cos(fi1L + fi2L) + maniLav.l3 * cos(fi1L + fi2L + fi3L)));
         double y3 = (float) (maniLav.y0 + maniLav.f * (maniLav.l1 * sin(fi1L) + maniLav.l2 * sin(fi1L + fi2L) + maniLav.l3 * sin(fi1L + fi2L + fi3L)));
         maniRed.setCollision(maniLav.x0, maniLav.y0, x1, y1, x2, y2, x3, y3);
-/*
-        setGoal(maniRed);
-        maniRed.goalDone = true;
-        calc(maniRed);
-        maniRed.calcDone = true;
 
-        goingRed = true;
-*/
-        runCalc();
+        runThread();
     }
 
-    private void runCalc() {
+    private void runThread() {
         thread = new Thread(() -> {
             while (!thread.isInterrupted()) {
                 if (goingRed) {
@@ -259,29 +243,45 @@ public class Manipulators extends ApplicationAdapter {
 
     private void iterate(Manipulator mani) {
         mani.itering = true;
+        float dt = 1 / 60f;
 
+        if (mani.forces != null && !mani.forces.isEmpty()) {
+            Point3 point = mani.forces.get(i);
+            //mani.a.add(mani.w.multiply(dt));
+            mani.a.fi1 += mani.w.fi1 * dt;
+            mani.a.fi2 += mani.w.fi2 * dt;
+            mani.a.fi3 += mani.w.fi3 * dt;
+            mani.w.fi1 += point.fi1 * dt;
+            mani.w.fi2 += point.fi2 * dt;
+            mani.w.fi3 += point.fi3 * dt;
+
+            setSprites(mani, mani.a.fi1, mani.a.fi2, mani.a.fi3);
+
+            if (mani.w.fi1 == 0 && mani.w.fi2 == 0 && mani.w.fi3 == 0) {
+                System.out.println((mani.a.fi1 - mani.steps.get(k).fi1) + " " + (mani.a.fi2 - mani.steps.get(k).fi2) + " " + (mani.a.fi3 - mani.steps.get(k).fi3));
+                mani.a = mani.steps.get(k);
+                k++;
+            }
+
+            i++;
+            if (i == mani.forces.size()) {
+                //    System.out.println("NowL: " + (float) (0.5 + l1L * cos(f1) + l2L * cos(f1 + f2) + l3L * cos(f1 + f2 + f3)) + " " + (float) (l1L * sin(f1) + l2L * sin(f1 + f2) + l3L * sin(f1 + f2 + f3)));
+                Point3 point3 = mani.steps.get(mani.steps.size() - 1);
+
+                setSprites(mani, point3.fi1, point3.fi2, point3.fi3);
+
+                mani.setPosition((short) (point3.fi1 * (n + 1) / PI - 1), (short) ((point3.fi2 + PI) * (n + 1) / PI - 1), (short) ((point3.fi3 + PI) * (n + 1) / PI - 1));
+                mani.iterDone = true;
+                i = 0;
+                k = 1;
+            }
+        } else mani.iterDone = true;
+
+/*
         if (mani.steps != null && !mani.steps.isEmpty()) {
             Point3 point3 = mani.steps.get(i);
 
-            double f1 = point3.fi1;
-            double f2 = point3.fi2;
-            double f3 = point3.fi3;
-
-            if (mani.y0 == 0) {
-                link2L.setPosition(field * (float) (mani.x0 + mani.f * (mani.l1 * cos(f1))) - r, field * (float) (mani.y0 + mani.f * (mani.l1 * sin(f1))) - r);
-                link3L.setPosition(field * (float) (mani.x0 + mani.f * (mani.l1 * cos(f1) + mani.l2 * cos(f1 + f2))) - r, field * (float) (mani.y0 + mani.f * (mani.l1 * sin(f1) + mani.l2 * sin(f1 + f2))) - r);
-
-                link1L.setRotation((float) (f1 * 180 / PI - 90));
-                link2L.setRotation((float) ((f1 + f2) * 180 / PI - 90));
-                link3L.setRotation((float) ((f1 + f2 + f3) * 180 / PI - 90));
-            } else {
-                link2R.setPosition(field * (float) (mani.x0 + mani.f * (mani.l1 * cos(f1))) - r, field * (float) (mani.y0 + mani.f * (mani.l1 * sin(f1))) - r);
-                link3R.setPosition(field * (float) (mani.x0 + mani.f * (mani.l1 * cos(f1) + mani.l2 * cos(f1 + f2))) - r, field * (float) (mani.y0 + mani.f * (mani.l1 * sin(f1) + mani.l2 * sin(f1 + f2))) - r);
-
-                link1R.setRotation((float) (f1 * 180 / PI + 90));
-                link2R.setRotation((float) ((f1 + f2) * 180 / PI + 90));
-                link3R.setRotation((float) ((f1 + f2 + f3) * 180 / PI + 90));
-            }
+            setSprites(mani, point3.fi1, point3.fi2, point3.fi3);
 
             i++;
             if (i == mani.steps.size()) {
@@ -291,8 +291,26 @@ public class Manipulators extends ApplicationAdapter {
                 i = 0;
             }
         } else mani.iterDone = true;
-
+*/
         mani.itering = false;
+    }
+
+    private void setSprites(Manipulator mani, double f1, double f2, double f3) {
+        if (mani.y0 == 0) {
+            link2L.setPosition(field * (float) (mani.x0 + mani.f * (mani.l1 * cos(f1))) - r, field * (float) (mani.y0 + mani.f * (mani.l1 * sin(f1))) - r);
+            link3L.setPosition(field * (float) (mani.x0 + mani.f * (mani.l1 * cos(f1) + mani.l2 * cos(f1 + f2))) - r, field * (float) (mani.y0 + mani.f * (mani.l1 * sin(f1) + mani.l2 * sin(f1 + f2))) - r);
+
+            link1L.setRotation((float) (f1 * 180 / PI - 90));
+            link2L.setRotation((float) ((f1 + f2) * 180 / PI - 90));
+            link3L.setRotation((float) ((f1 + f2 + f3) * 180 / PI - 90));
+        } else {
+            link2R.setPosition(field * (float) (mani.x0 + mani.f * (mani.l1 * cos(f1))) - r, field * (float) (mani.y0 + mani.f * (mani.l1 * sin(f1))) - r);
+            link3R.setPosition(field * (float) (mani.x0 + mani.f * (mani.l1 * cos(f1) + mani.l2 * cos(f1 + f2))) - r, field * (float) (mani.y0 + mani.f * (mani.l1 * sin(f1) + mani.l2 * sin(f1 + f2))) - r);
+
+            link1R.setRotation((float) (f1 * 180 / PI + 90));
+            link2R.setRotation((float) ((f1 + f2) * 180 / PI + 90));
+            link3R.setRotation((float) ((f1 + f2 + f3) * 180 / PI + 90));
+        }
     }
 
     @Override
