@@ -135,9 +135,7 @@ class Graph {
             }
         }
 
-        Vertex3 temp = graph.get(b);
-        Vertex3 good = temp;
-        Vertex3 last;
+        Vertex3 temp = graph.get(b), good = temp, last;
         while (temp != null && temp.number != a) {
             last = good;
             result.add(new Point3((good.fi1 + 1) * PI / (space.length + 1), (good.fi2 + 1) * 2 * PI / (space[0].length + 1) - PI, (good.fi3 + 1) * 2 * PI / (space[0][0].length + 1) - PI));

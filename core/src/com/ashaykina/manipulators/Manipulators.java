@@ -13,7 +13,7 @@ import static java.lang.Math.*;
 
 public class Manipulators extends ApplicationAdapter {
     private short field;
-    private short n = 130; // 144 - уже падает // 175 максимум
+    private short n = 140; // 144 - уже падает // 175 максимум
 
     private SpriteBatch batch;
     //Параметры лавандового манипулятора
@@ -57,17 +57,17 @@ public class Manipulators extends ApplicationAdapter {
         double l2L = 0.372677996;
         double l3L = 0.372677996;
 
-        double fi1L = 1.1071487177941;
-        double fi2L = PI - fi1L + 0.2;
-        double fi3L = -fi2L + 1;
+        double fi1L = PI/3;
+        double fi2L = PI - fi1L;
+        double fi3L = -fi2L;
 
         double l1R = 0.372677996;
         double l2R = 0.372677996;
         double l3R = 0.372677996;
 
-        double fi1R = 1.1071487177941;
-        double fi2R = PI - fi1R + 0.2;
-        double fi3R = -fi2R + 1;
+        double fi1R =  PI/3;
+        double fi2R = PI - fi1R;
+        double fi3R = -fi2R;
 
         random = new Random();
 
@@ -104,10 +104,11 @@ public class Manipulators extends ApplicationAdapter {
         link3R = new Sprite(new Texture(Gdx.files.internal("core/assets/linkRed.png")), 0, 373 - height, 2 * r, height);
         link3R.setOrigin(r, r);  // Центр вращения.
 
-        setSprites(maniRed, fi1R, fi2R, fi3R);
-        setSprites(maniLav, fi1L, fi2L, fi3L);
+        setSprites(maniRed, maniRed.a.fi1, maniRed.a.fi2, maniRed.a.fi3);
+        setSprites(maniLav, maniLav.a.fi1, maniLav.a.fi2, maniLav.a.fi3);
 
         goingRed = false;
+        maniLav.state = 3;
 
         double x1 = (float) (maniLav.x0 + maniLav.f * (maniLav.l1 * cos(fi1L)));
         double y1 = (float) (maniLav.y0 + maniLav.f * (maniLav.l1 * sin(fi1L)));
@@ -126,11 +127,11 @@ public class Manipulators extends ApplicationAdapter {
         thread = new Thread(() -> {
             while (!thread.isInterrupted()) {
                 if (goingRed) {
-                    if (!maniLav.goalDone && !maniLav.goaling) setGoal(maniLav);
-                    else if (!maniLav.calcDone && !maniLav.calcing) calc(maniLav);
+                    if (maniLav.state == 0 && !maniLav.doing) setGoal(maniLav);
+                    else if (maniLav.state == 1 && !maniLav.doing) calculate(maniLav);
                 } else {
-                    if (!maniRed.goalDone && !maniRed.goaling) setGoal(maniRed);
-                    else if (!maniRed.calcDone && !maniRed.calcing) calc(maniRed);
+                    if (maniRed.state == 0 && !maniRed.doing) setGoal(maniRed);
+                    else if (maniRed.state == 1 && !maniRed.doing) calculate(maniRed);
                 }
             }
         });
@@ -157,65 +158,51 @@ public class Manipulators extends ApplicationAdapter {
         //    for(Sprite sp : grid) {
         //        sp.draw(batch);
         //    }
-
         batch.end();
 
 /*
-        if (maniRed.goalDone && maniRed.calcDone && !maniRed.iterDone) {
-            if (!maniRed.itering) {
-                iterate(maniRed);
-            }
-        } else if (maniRed.goalDone && maniRed.calcDone && maniRed.iterDone) {
-            maniRed.goalDone = false;
-            maniRed.calcDone = false;
-            maniRed.iterDone = false;
-        }
+        if (maniRed.state == 2)
+            if (!maniRed.doing) iterate(maniRed);
+        else if (maniRed.state == 3) maniRed.state == 0;
 */
 
         if (goingRed) {
-            if (!maniRed.iterDone && !maniRed.itering) {
-                iterate(maniRed);
-            }
-            if (maniLav.goalDone && maniLav.calcDone && maniRed.iterDone) {
-                maniRed.goalDone = false;
-                maniRed.calcDone = false;
-                maniRed.iterDone = false;
+            if (maniRed.state == 2 && !maniRed.doing) iterate(maniRed);
+            if (maniLav.state == 2 && maniRed.state == 3) {
+                maniRed.state = 0;
                 goingRed = false;
             }
         } else {
-            if (!maniLav.iterDone && !maniLav.itering) {
-                iterate(maniLav);
-            }
-            if (maniRed.goalDone && maniRed.calcDone && maniLav.iterDone) {
-                maniLav.goalDone = false;
-                maniLav.calcDone = false;
-                maniLav.iterDone = false;
+            if (maniLav.state == 2 && !maniLav.doing) iterate(maniLav);
+            if (maniRed.state == 2 && maniLav.state == 3) {
+                maniLav.state = 0;
                 goingRed = true;
             }
         }
-
     }
 
     //Генерирование цели и обозначение её в матрице
     private void setGoal(Manipulator mani) {
         //    long l = System.currentTimeMillis();
-        mani.goaling = true;
+        mani.doing = true;
+        boolean goalDone = false;
         float x = 0;
         float y = 0;
-        while (!mani.goalDone) {
+        while (!goalDone) {
             x = random.nextFloat();
             y = random.nextFloat();
             System.out.println("Goal: " + x + " " + y);
-            mani.goalDone = mani.setGoal(x, y);
+            goalDone = mani.setGoal(x, y);
         }
         if (mani.y0 == 0) goalL.setPosition(field * x - r, field * y - r);
         else goalR.setPosition(field * x - r, field * y - r);
-        mani.goaling = false;
+        mani.state++;
+        mani.doing = false;
         //    System.out.println("Goal: " + (System.currentTimeMillis() - l));
     }
 
-    private void calc(Manipulator mani) {
-        mani.calcing = true;
+    private void calculate(Manipulator mani) {
+        mani.doing = true;
         //    long l = System.currentTimeMillis();
         mani.calculate();
         Point3 point3 = mani.steps.get(mani.steps.size() - 1);
@@ -237,12 +224,12 @@ public class Manipulators extends ApplicationAdapter {
         //    System.out.println("Time: " + (System.currentTimeMillis() - l));
         //    System.out.println();
         //    System.out.println(stepsL);
-        mani.calcDone = true;
-        mani.calcing = false;
+        mani.state++;
+        mani.doing = false;
     }
 
     private void iterate(Manipulator mani) {
-        mani.itering = true;
+        mani.doing = true;
         float dt = 1 / 60f;
 
         if (mani.forces != null && !mani.forces.isEmpty()) {
@@ -271,11 +258,11 @@ public class Manipulators extends ApplicationAdapter {
                 setSprites(mani, point3.fi1, point3.fi2, point3.fi3);
 
                 mani.setPosition((short) (point3.fi1 * (n + 1) / PI - 1), (short) ((point3.fi2 + PI) * (n + 1) / PI - 1), (short) ((point3.fi3 + PI) * (n + 1) / PI - 1));
-                mani.iterDone = true;
+                mani.state++;
                 i = 0;
                 k = 1;
             }
-        } else mani.iterDone = true;
+        }
 
 /*
         if (mani.steps != null && !mani.steps.isEmpty()) {
@@ -292,7 +279,7 @@ public class Manipulators extends ApplicationAdapter {
             }
         } else mani.iterDone = true;
 */
-        mani.itering = false;
+        mani.doing = false;
     }
 
     private void setSprites(Manipulator mani, double f1, double f2, double f3) {

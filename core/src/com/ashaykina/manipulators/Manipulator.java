@@ -20,12 +20,8 @@ class Manipulator {
     byte f;
     Point3 a, w;
 
-    boolean goaling = false;
-    boolean goalDone = false;
-    boolean calcing = false;
-    boolean calcDone = false;
-    boolean itering = false;
-    boolean iterDone = false;
+    byte state = 0;
+    boolean doing = false;
 
     ArrayList<Point3> steps, forces;
 
